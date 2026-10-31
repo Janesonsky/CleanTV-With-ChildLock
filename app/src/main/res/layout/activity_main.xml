@@ -171,8 +171,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:gravity="end">
 
                     <TextClock
                         android:id="@+id/clock"
@@ -183,6 +183,21 @@
                         android:textColor="#FFFFFFFF"
                         android:textSize="36sp"
                         android:fontVariationSettings="'wght' 300" />
+
+                    <!-- 儿童/大人模式状态胶囊提示 -->
+                    <TextView
+                        android:id="@+id/tvModeBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
+                        android:background="@drawable/emotn_card_bg"
+                        android:textColor="#81D4FA"
+                        android:textSize="12sp"
+                        android:visibility="gone" />
                 </LinearLayout>
             </LinearLayout>
         </RelativeLayout>

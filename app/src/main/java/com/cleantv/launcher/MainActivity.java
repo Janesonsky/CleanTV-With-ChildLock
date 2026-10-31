@@ -127,6 +127,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The lunar date beside the date; stays gone unless the TV speaks Chinese. */
     private TextView lunar;
     private TextView btnWifi;
+    private TextView tvModeBadge;
     /** The "Favourites" panel, so Back can close it. */
     private PopupWindow dockPicker;
     /** The app library panel, open while the user picks apps for the desk. */
@@ -251,6 +252,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             updateLunar();
         }
         btnWifi = findViewById(R.id.btnWifi);
+        tvModeBadge = findViewById(R.id.tvModeBadge);
+        if (tvModeBadge != null) {
+            tvModeBadge.setOnClickListener(v -> {
+                // 点击可打开儿童锁设置页
+                startActivity(new Intent(this, com.cleantv.launcher.childlock.ChildLockSettingsActivity.class));
+            });
+        }
 
         grid = findViewById(R.id.grid);
         grid.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false) {
@@ -483,6 +491,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (weather != null && weather.enabled()) refreshWeather();
         updateLunar();
         updateWifiLabel();
+        updateModeBadge();
         handler.postDelayed(minuteTick, MINUTE_MS);
         if (weather != null && weather.enabled() && weather.hasPlace()) {
             handler.postDelayed(weatherTick, Weather.REFRESH_MS);
@@ -2448,6 +2457,36 @@ private int recommendColumns() {
         } catch (Exception ignored) {
         }
         btnWifi.setText(text);
+    }
+
+    private void updateModeBadge() {
+        if (tvModeBadge == null) return;
+        com.cleantv.launcher.childlock.ChildLockStore store =
+                com.cleantv.launcher.childlock.ChildLockStore.getInstance(this);
+        if (!store.isChildLockEnabled()) {
+            tvModeBadge.setVisibility(View.GONE);
+            return;
+        }
+
+        String mode = store.getCurrentSessionMode();
+        if (com.cleantv.launcher.childlock.ChildLockStore.MODE_CHILD.equals(mode)) {
+            tvModeBadge.setVisibility(View.VISIBLE);
+            tvModeBadge.setText("👶 儿童护眼模式");
+            tvModeBadge.setTextColor(0xFF81D4FA);
+        } else if (com.cleantv.launcher.childlock.ChildLockStore.MODE_ADULT.equals(mode)) {
+            com.cleantv.launcher.childlock.ChildLockRule rule =
+                    com.cleantv.launcher.childlock.ChildLockManager.getInstance(this)
+                            .getMatchedRule(Calendar.getInstance());
+            if (rule != null) {
+                tvModeBadge.setVisibility(View.VISIBLE);
+                tvModeBadge.setText("👨‍👩‍👧 大人模式");
+                tvModeBadge.setTextColor(0xFFFFD54F);
+            } else {
+                tvModeBadge.setVisibility(View.GONE);
+            }
+        } else {
+            tvModeBadge.setVisibility(View.GONE);
+        }
     }
 
     private void open(Intent i) {
