@@ -344,6 +344,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         View btnSettings = findViewById(R.id.btnSettings);
         findViewById(R.id.btnDock).setOnClickListener(v -> showDockPicker());
         findViewById(R.id.btnWallpaper).setOnClickListener(v -> showWallpaperPicker());
+        View btnChildLock = findViewById(R.id.btnChildLock);
+        if (btnChildLock != null) {
+            btnChildLock.setOnClickListener(v -> {
+                startActivity(new Intent(MainActivity.this,
+                        com.cleantv.launcher.childlock.ChildLockSettingsActivity.class));
+            });
+        }
         btnInputs.setOnClickListener(v -> showInputs());
         btnWifi.setOnClickListener(v -> open(systemIntent(Settings.ACTION_WIFI_SETTINGS)));
         btnSettings.setOnClickListener(v -> open(systemIntent(Settings.ACTION_SETTINGS)));
@@ -1387,6 +1394,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         bingTick.setVisibility(wall.autoDaily() ? View.VISIBLE : View.INVISIBLE);
         status.setText(wallpaperStatus());
         columnsStatus.setText(columnsStatus());
+
+        View rowChildLock = panel.findViewById(R.id.rowChildLock);
+        if (rowChildLock != null) {
+            rowChildLock.setOnClickListener(v -> {
+                if (wallpaperPanel != null) wallpaperPanel.dismiss();
+                startActivity(new Intent(MainActivity.this,
+                        com.cleantv.launcher.childlock.ChildLockSettingsActivity.class));
+            });
+        }
 
         rowBing.setOnClickListener(v -> {
             boolean on = !wall.autoDaily();
