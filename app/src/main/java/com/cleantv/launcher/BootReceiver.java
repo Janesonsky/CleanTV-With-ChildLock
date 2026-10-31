@@ -21,6 +21,14 @@ public class BootReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         Log.i(TAG, "Received boot action: " + action);
 
+        // 接收测试指令广播
+        if ("com.cleantv.launcher.TEST_ENFORCE_EXIT".equals(action)) {
+            Log.i(TAG, "Received TEST_ENFORCE_EXIT broadcast");
+            com.cleantv.launcher.childlock.ChildLockManager.getInstance(context)
+                    .enforceExitAndCooldown(context, "测试：单次观看时间已满，请休息！", 45);
+            return;
+        }
+
         SharedPreferences prefs = context.getSharedPreferences(Config.PREFS_NAME, Context.MODE_PRIVATE);
         String bootPackage = prefs.getString(Config.KEY_BOOT_APP_PACKAGE, null);
 

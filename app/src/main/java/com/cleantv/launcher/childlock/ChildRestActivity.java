@@ -161,7 +161,7 @@ public class ChildRestActivity extends Activity {
         };
         final StringBuilder pinBuffer = new StringBuilder();
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar)
                 .setView(dialogView)
                 .setCancelable(true)
                 .create();
@@ -244,7 +244,14 @@ public class ChildRestActivity extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        // 吞掉所有物理按键，防止孩子按返回键退出锁屏
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            // 支持在锁屏界面直接按遥控器数字键弹出家长密码验证
+            if (event.getKeyCode() >= KeyEvent.KEYCODE_0 && event.getKeyCode() <= KeyEvent.KEYCODE_9) {
+                showParentUnlockDialog();
+                return true;
+            }
+        }
+        // 吞掉返回键，防止孩子按返回键退出锁屏
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
             return true;
         }

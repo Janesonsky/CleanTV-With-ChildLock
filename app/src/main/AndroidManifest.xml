@@ -154,6 +154,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.cleantv.launcher.TEST_ENFORCE_EXIT" />
             </intent-filter>
         </receiver>
 
