@@ -201,8 +201,9 @@
             android:layout_marginTop="8dp"
             android:background="@drawable/emotn_card_bg"
             android:text="↩ 返回桌面"
-            android:textColor="#FFFFFFFF"
+            android:textColor="@color/menu_item_text_color"
             android:textSize="15sp"
+            android:textStyle="bold"
             android:focusable="true" />
     </LinearLayout>
 
@@ -236,8 +237,9 @@
                 android:layout_height="38dp"
                 android:background="@drawable/emotn_card_bg"
                 android:text="➕ 添加新规则"
-                android:textColor="#FFFFFFFF"
+                android:textColor="@color/menu_item_text_color"
                 android:textSize="13sp"
+                android:textStyle="bold"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:focusable="true" />

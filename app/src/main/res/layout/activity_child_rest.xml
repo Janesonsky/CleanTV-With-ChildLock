@@ -68,7 +68,8 @@
             android:layout_marginTop="40dp"
             android:background="@drawable/emotn_card_bg"
             android:text="🔑 家长解锁"
-            android:textColor="#FFFFFFFF"
+            android:textColor="@color/menu_item_text_color"
+            android:textStyle="bold"
             android:textSize="18sp"
             android:focusable="true" />
 

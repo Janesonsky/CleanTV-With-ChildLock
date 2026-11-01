@@ -98,9 +98,9 @@
         <Button android:id="@+id/btn_num_9" style="@style/PinKeyBtn" android:text="9" />
 
         <!-- 第 4 排：清空, 0, 取消 -->
-        <Button android:id="@+id/btn_pin_clear" style="@style/PinKeyBtn" android:text="清除" android:textSize="15sp" android:textColor="#FFB300" />
+        <Button android:id="@+id/btn_pin_clear" style="@style/PinKeyBtn" android:text="清除" android:textSize="15sp" android:textColor="@color/menu_warning_text_color" />
         <Button android:id="@+id/btn_num_0" style="@style/PinKeyBtn" android:text="0" />
-        <Button android:id="@+id/btn_pin_cancel" style="@style/PinKeyBtn" android:text="取消" android:textSize="15sp" android:textColor="#E0E0E0" />
+        <Button android:id="@+id/btn_pin_cancel" style="@style/PinKeyBtn" android:text="取消" android:textSize="15sp" android:textColor="@color/menu_item_text_color" />
     </GridLayout>
 
     <TextView
