@@ -215,19 +215,39 @@
         android:background="@drawable/bg_menu_bubble"
         android:padding="20dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="⏰ 管控时段规则列表（点击可启停）"
-            android:textColor="#FFFFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⏰ 管控时段规则"
+                android:textColor="#FFFFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_add_rule"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:background="@drawable/emotn_card_bg"
+                android:text="➕ 添加新规则"
+                android:textColor="#FFFFFFFF"
+                android:textSize="13sp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:focusable="true" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="命中规则时段内开机会弹出大人/儿童双选；可在手机端更细致编辑。"
+            android:text="OK键[启停/修改/删除]；管控时间内开机自动弹出大人/儿童双选。"
             android:textColor="#90A4AE"
             android:textSize="12sp" />
 

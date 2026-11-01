@@ -255,8 +255,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         tvModeBadge = findViewById(R.id.tvModeBadge);
         if (tvModeBadge != null) {
             tvModeBadge.setOnClickListener(v -> {
-                // 点击可打开儿童锁设置页
-                startActivity(new Intent(this, com.cleantv.launcher.childlock.ChildLockSettingsActivity.class));
+                // 点击进入儿童锁设置页（先验证密码）
+                com.cleantv.launcher.childlock.ChildLockManager.getInstance(this)
+                        .openSettingsWithPassword(this);
             });
         }
 
@@ -347,8 +348,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         View btnChildLock = findViewById(R.id.btnChildLock);
         if (btnChildLock != null) {
             btnChildLock.setOnClickListener(v -> {
-                startActivity(new Intent(MainActivity.this,
-                        com.cleantv.launcher.childlock.ChildLockSettingsActivity.class));
+                // 点击进入儿童锁设置页（先验证密码）
+                com.cleantv.launcher.childlock.ChildLockManager.getInstance(MainActivity.this)
+                        .openSettingsWithPassword(MainActivity.this);
             });
         }
         btnInputs.setOnClickListener(v -> showInputs());
@@ -456,6 +458,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (ACTION_DESKTOP_SETTINGS.equals(action)) grid.post(this::showWallpaperPicker);
         else if (ACTION_DOCK_PICKER.equals(action)) grid.post(this::showDockPicker);
         else if (ACTION_SHOW_INPUTS.equals(action)) grid.post(this::showInputs);
+        else if ("com.cleantv.launcher.action.OPEN_CHILD_LOCK".equals(action)) {
+            grid.post(() -> com.cleantv.launcher.childlock.ChildLockManager.getInstance(this)
+                    .openSettingsWithPassword(this));
+        }
     }
 
     @Override

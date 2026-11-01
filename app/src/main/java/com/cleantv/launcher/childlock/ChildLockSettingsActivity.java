@@ -88,7 +88,10 @@ public class ChildLockSettingsActivity extends Activity {
             refreshStatus();
         });
 
-        // 6. 返回按钮
+        // 6. 添加新规则
+        findViewById(R.id.btn_add_rule).setOnClickListener(v -> showRuleEditDialog(null));
+
+        // 7. 返回按钮
         findViewById(R.id.btn_close_settings).setOnClickListener(v -> finish());
     }
 
@@ -138,15 +141,180 @@ public class ChildLockSettingsActivity extends Activity {
                     rule.getCooldownMinutes() + " 分钟 · 每日上限 " + rule.getDailyLimitMinutes() + " 分钟");
 
             final int idx = i;
-            itemView.setOnClickListener(v -> {
-                rule.setEnabled(!rule.isEnabled());
-                store.addOrUpdateRule(rule);
-                refreshStatus();
-                Toast.makeText(this, rule.getName() + (rule.isEnabled() ? " 已启用" : " 已停用"), Toast.LENGTH_SHORT).show();
+            itemView.setOnClickListener(v -> showRuleActionDialog(rule));
+            itemView.setOnLongClickListener(v -> {
+                showRuleActionDialog(rule);
+                return true;
             });
 
             layoutRulesContainer.addView(itemView);
         }
+    }
+
+    /**
+     * 点击规则弹出操作菜单：【切换启停】、【修改规则】、【删除规则】
+     */
+    private void showRuleActionDialog(final ChildLockRule rule) {
+        String toggleText = rule.isEnabled() ? "⏸️ 设为停用" : "▶️ 设为启用";
+        CharSequence[] items = new CharSequence[]{toggleText, "✏️ 修改此规则", "🗑️ 删除此规则"};
+
+        new AlertDialog.Builder(this)
+                .setTitle("⚙️ 操作：" + rule.getName())
+                .setItems(items, (dialog, which) -> {
+                    if (which == 0) {
+                        rule.setEnabled(!rule.isEnabled());
+                        store.addOrUpdateRule(rule);
+                        refreshStatus();
+                        Toast.makeText(this, rule.getName() + (rule.isEnabled() ? " 已启用" : " 已停用"), Toast.LENGTH_SHORT).show();
+                    } else if (which == 1) {
+                        showRuleEditDialog(rule);
+                    } else if (which == 2) {
+                        new AlertDialog.Builder(this)
+                                .setTitle("确定删除？")
+                                .setMessage("确定要删除「" + rule.getName() + "」吗？")
+                                .setPositiveButton("删除", (d2, w2) -> {
+                                    store.deleteRule(rule.getId());
+                                    refreshStatus();
+                                    Toast.makeText(this, "已删除规则", Toast.LENGTH_SHORT).show();
+                                })
+                                .setNegativeButton("取消", null)
+                                .show();
+                    }
+                })
+                .show();
+    }
+
+    /**
+     * 规则新增 / 修改编辑器弹窗
+     */
+    private void showRuleEditDialog(final ChildLockRule existingRule) {
+        final boolean isEdit = (existingRule != null);
+        final ChildLockRule rule = isEdit ? existingRule : new ChildLockRule();
+        if (!isEdit) {
+            rule.setName("新建管控时段");
+        }
+
+        final View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_child_rule_editor, null);
+        final TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_rule_title);
+        tvTitle.setText(isEdit ? "✏️ 修改管控规则" : "➕ 添加管控时段规则");
+
+        final EditText etName = dialogView.findViewById(R.id.et_edit_rule_name);
+        etName.setText(rule.getName());
+
+        final int[] startH = new int[]{rule.getStartHour()};
+        final int[] endH = new int[]{rule.getEndHour()};
+        final int[] singleM = new int[]{rule.getSingleLimitMinutes()};
+        final int[] cooldownM = new int[]{rule.getCooldownMinutes()};
+        final int[] dailyM = new int[]{rule.getDailyLimitMinutes()};
+        final java.util.Set<Integer> daysSet = new java.util.HashSet<>(rule.getDays());
+
+        final Button btnStart = dialogView.findViewById(R.id.btn_edit_start_time);
+        final Button btnEnd = dialogView.findViewById(R.id.btn_edit_end_time);
+        final Button btnSingle = dialogView.findViewById(R.id.btn_edit_single_limit);
+        final Button btnCooldown = dialogView.findViewById(R.id.btn_edit_cooldown);
+        final Button btnDaily = dialogView.findViewById(R.id.btn_edit_daily_limit);
+
+        Runnable updateTimes = () -> {
+            btnStart.setText(String.format(java.util.Locale.getDefault(), "开始: %02d:00", startH[0]));
+            btnEnd.setText(String.format(java.util.Locale.getDefault(), "结束: %02d:00", endH[0]));
+            btnSingle.setText("单次: " + singleM[0] + "分");
+            btnCooldown.setText("冷却: " + cooldownM[0] + "分");
+            btnDaily.setText("日总额: " + dailyM[0] + "分");
+        };
+        updateTimes.run();
+
+        btnStart.setOnClickListener(v -> {
+            startH[0] = (startH[0] + 1) % 24;
+            updateTimes.run();
+        });
+        btnEnd.setOnClickListener(v -> {
+            endH[0] = (endH[0] + 1) % 24;
+            updateTimes.run();
+        });
+
+        btnSingle.setOnClickListener(v -> {
+            int[] opts = new int[]{15, 30, 45, 60};
+            int next = 30;
+            for (int k = 0; k < opts.length; k++) {
+                if (opts[k] == singleM[0]) {
+                    next = opts[(k + 1) % opts.length];
+                    break;
+                }
+            }
+            singleM[0] = next;
+            updateTimes.run();
+        });
+
+        btnCooldown.setOnClickListener(v -> {
+            int[] opts = new int[]{30, 45, 60, 90};
+            int next = 60;
+            for (int k = 0; k < opts.length; k++) {
+                if (opts[k] == cooldownM[0]) {
+                    next = opts[(k + 1) % opts.length];
+                    break;
+                }
+            }
+            cooldownM[0] = next;
+            updateTimes.run();
+        });
+
+        btnDaily.setOnClickListener(v -> {
+            int[] opts = new int[]{60, 90, 120, 180};
+            int next = 90;
+            for (int k = 0; k < opts.length; k++) {
+                if (opts[k] == dailyM[0]) {
+                    next = opts[(k + 1) % opts.length];
+                    break;
+                }
+            }
+            dailyM[0] = next;
+            updateTimes.run();
+        });
+
+        // 星期按钮
+        int[] dayIds = new int[]{
+                R.id.btn_day_1, R.id.btn_day_2, R.id.btn_day_3,
+                R.id.btn_day_4, R.id.btn_day_5, R.id.btn_day_6, R.id.btn_day_7
+        };
+        Button[] dayBtns = new Button[7];
+        for (int d = 0; d < 7; d++) {
+            final int dayNum = d + 1;
+            dayBtns[d] = dialogView.findViewById(dayIds[d]);
+            final Button b = dayBtns[d];
+            b.setAlpha(daysSet.contains(dayNum) ? 1.0f : 0.35f);
+            b.setOnClickListener(v -> {
+                if (daysSet.contains(dayNum)) daysSet.remove(dayNum);
+                else daysSet.add(dayNum);
+                b.setAlpha(daysSet.contains(dayNum) ? 1.0f : 0.35f);
+            });
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        dialogView.findViewById(R.id.btn_save_edit_rule).setOnClickListener(v -> {
+            String nameStr = etName.getText().toString().trim();
+            if (!nameStr.isEmpty()) rule.setName(nameStr);
+            rule.setStartHour(startH[0]);
+            rule.setStartMinute(0);
+            rule.setEndHour(endH[0]);
+            rule.setEndMinute(0);
+            rule.setSingleLimitMinutes(singleM[0]);
+            rule.setCooldownMinutes(cooldownM[0]);
+            rule.setDailyLimitMinutes(dailyM[0]);
+            rule.setDays(new java.util.ArrayList<>(daysSet));
+            rule.setEnabled(true);
+
+            store.addOrUpdateRule(rule);
+            dialog.dismiss();
+            refreshStatus();
+            Toast.makeText(this, "规则「" + rule.getName() + "」已保存", Toast.LENGTH_SHORT).show();
+        });
+
+        dialogView.findViewById(R.id.btn_cancel_edit_rule).setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     private void showChangePasswordDialog() {

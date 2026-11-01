@@ -147,13 +147,15 @@ public class ChildLockStore {
     }
 
     // --- 运行状态 ---
+    // 内存变量：开机或进程冷启动时必须是 MODE_NONE，防止大人模式凭证被永久保存导致重启后跳过弹窗！
+    private String runtimeSessionMode = MODE_NONE;
 
     public String getCurrentSessionMode() {
-        return prefs.getString(KEY_CURRENT_MODE, MODE_NONE);
+        return runtimeSessionMode;
     }
 
     public void setCurrentSessionMode(String mode) {
-        prefs.edit().putString(KEY_CURRENT_MODE, mode).apply();
+        this.runtimeSessionMode = mode;
     }
 
     /**

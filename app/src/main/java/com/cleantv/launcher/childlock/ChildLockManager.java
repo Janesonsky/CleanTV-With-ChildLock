@@ -294,6 +294,80 @@ public class ChildLockManager {
     }
 
     /**
+     * 校验家长密码并打开童锁设置页面（需求 1：大人模式进入童锁管理也必须输密码）
+     */
+    public void openSettingsWithPassword(Activity activity) {
+        if (activity == null || activity.isFinishing()) return;
+
+        View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_parent_pin, null);
+        TextView tvTitle = dialogView.findViewById(R.id.tv_pin_title);
+        if (tvTitle != null) tvTitle.setText("🔒 请输入密码进入童锁管理");
+        TextView tvError = dialogView.findViewById(R.id.tv_pin_error);
+        View[] dots = new View[]{
+                dialogView.findViewById(R.id.pin_dot_1),
+                dialogView.findViewById(R.id.pin_dot_2),
+                dialogView.findViewById(R.id.pin_dot_3),
+                dialogView.findViewById(R.id.pin_dot_4)
+        };
+        StringBuilder pinBuffer = new StringBuilder();
+
+        AlertDialog pinDialog = new AlertDialog.Builder(activity)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        Runnable updateDots = () -> {
+            for (int i = 0; i < 4; i++) {
+                if (dots[i] != null) {
+                    dots[i].setAlpha(i < pinBuffer.length() ? 1.0f : 0.2f);
+                }
+            }
+        };
+        updateDots.run();
+
+        pinDialog.setOnKeyListener((d, keyCode, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9) {
+                    int digit = keyCode - KeyEvent.KEYCODE_0;
+                    if (pinBuffer.length() < 4) {
+                        pinBuffer.append(digit);
+                        updateDots.run();
+                        tvError.setVisibility(View.INVISIBLE);
+                    }
+                    if (pinBuffer.length() == 4) {
+                        if (store.checkPassword(pinBuffer.toString())) {
+                            pinDialog.dismiss();
+                            activity.startActivity(new Intent(activity, ChildLockSettingsActivity.class));
+                        } else {
+                            tvError.setVisibility(View.VISIBLE);
+                            pinBuffer.setLength(0);
+                            updateDots.run();
+                        }
+                    }
+                    return true;
+                } else if (keyCode == KeyEvent.KEYCODE_DEL) {
+                    if (pinBuffer.length() > 0) {
+                        pinBuffer.deleteCharAt(pinBuffer.length() - 1);
+                        updateDots.run();
+                    }
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        dialogView.findViewById(R.id.btn_pin_clear).setOnClickListener(v -> {
+            pinBuffer.setLength(0);
+            updateDots.run();
+            tvError.setVisibility(View.INVISIBLE);
+        });
+
+        dialogView.findViewById(R.id.btn_pin_cancel).setOnClickListener(v -> pinDialog.dismiss());
+
+        pinDialog.show();
+    }
+
+    /**
      * 核心组合拳：强制退出当前正在观看的应用，并进入冷却倒计时
      * （完美解决“在儿童模式中如何强制退出当前应用”的痛点！）
      */

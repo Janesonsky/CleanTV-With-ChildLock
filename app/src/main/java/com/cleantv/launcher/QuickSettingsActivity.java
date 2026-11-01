@@ -56,7 +56,7 @@ public final class QuickSettingsActivity extends Activity {
         addRow(rows, R.drawable.ic_settings, R.string.phone_portal, 0,
                 new Intent(this, PhonePortalActivity.class));
         addRow(rows, R.drawable.ic_settings, R.string.child_lock_settings, 0,
-                new Intent(this, com.cleantv.launcher.childlock.ChildLockSettingsActivity.class));
+                new Intent(this, MainActivity.class).setAction("com.cleantv.launcher.action.OPEN_CHILD_LOCK"));
         rows.getChildAt(0).requestFocus();
     }
 
