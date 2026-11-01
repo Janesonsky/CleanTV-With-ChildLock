@@ -177,6 +177,43 @@ public class ChildRestActivity extends Activity {
         };
         updateDots.run();
 
+        // 统一按键处理逻辑（虚拟键盘点选 + 遥控器物理数字键）
+        final View.OnClickListener digitListener = v -> {
+            Object tag = v.getTag();
+            if (tag instanceof Integer) {
+                int digit = (Integer) tag;
+                if (pinBuffer.length() < 4) {
+                    pinBuffer.append(digit);
+                    updateDots.run();
+                    tvError.setVisibility(View.INVISIBLE);
+                }
+                if (pinBuffer.length() == 4) {
+                    if (store.checkPassword(pinBuffer.toString())) {
+                        dialog.dismiss();
+                        showUnlockOptionsDialog();
+                    } else {
+                        tvError.setVisibility(View.VISIBLE);
+                        pinBuffer.setLength(0);
+                        updateDots.run();
+                    }
+                }
+            }
+        };
+
+        // 绑定 0-9 虚拟按钮
+        int[] numIds = new int[]{
+                R.id.btn_num_0, R.id.btn_num_1, R.id.btn_num_2, R.id.btn_num_3,
+                R.id.btn_num_4, R.id.btn_num_5, R.id.btn_num_6, R.id.btn_num_7,
+                R.id.btn_num_8, R.id.btn_num_9
+        };
+        for (int i = 0; i <= 9; i++) {
+            Button b = dialogView.findViewById(numIds[i]);
+            if (b != null) {
+                b.setTag(i);
+                b.setOnClickListener(digitListener);
+            }
+        }
+
         // 监听遥控器数字键直接输入
         dialog.setOnKeyListener((dialogInterface, keyCode, keyEvent) -> {
             if (keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
@@ -216,6 +253,9 @@ public class ChildRestActivity extends Activity {
         });
 
         dialogView.findViewById(R.id.btn_pin_cancel).setOnClickListener(v -> dialog.dismiss());
+
+        View key5 = dialogView.findViewById(R.id.btn_num_5);
+        if (key5 != null) key5.requestFocus();
     }
 
     private void showUnlockOptionsDialog() {

@@ -230,6 +230,31 @@ public class ChildLockManager {
                 .setCancelable(true)
                 .create();
 
+        setupPinVirtualKeyboard(dialogView, pinDialog, pinBuffer, dots, tvError, () -> {
+            pinDialog.dismiss();
+            if (modeSelectDialog != null) modeSelectDialog.dismiss();
+            // 细节 2：进入大人模式，本次开机空闲不自动复位，畅看无阻
+            store.setCurrentSessionMode(ChildLockStore.MODE_ADULT);
+            isChildSessionActive = false;
+            Toast.makeText(deskActivity, "已验证通过，进入大人模式（畅看无限制）", Toast.LENGTH_SHORT).show();
+        });
+
+        pinDialog.show();
+        // 默认聚焦数字键盘中的数字 5（处于 3x4 正中间，遥控器向上下左右都只需一步）
+        View key5 = dialogView.findViewById(R.id.btn_num_5);
+        if (key5 != null) key5.requestFocus();
+    }
+
+    private interface DigitConsumer {
+        void onDigit(int digit);
+    }
+
+    /**
+     * 绑定 3x4 遥控器虚拟数字键盘与按键逻辑
+     */
+    private void setupPinVirtualKeyboard(View dialogView, AlertDialog pinDialog,
+                                         StringBuilder pinBuffer, View[] dots, TextView tvError,
+                                         Runnable onSuccess) {
         Runnable updateDots = () -> {
             for (int i = 0; i < 4; i++) {
                 if (dots[i] != null) {
@@ -239,29 +264,71 @@ public class ChildLockManager {
         };
         updateDots.run();
 
+        final DigitConsumer consumer = new DigitConsumer() {
+            @Override
+            public void onDigit(int digit) {
+                if (pinBuffer.length() < 4) {
+                    pinBuffer.append(digit);
+                    updateDots.run();
+                    tvError.setVisibility(View.INVISIBLE);
+                }
+                if (pinBuffer.length() == 4) {
+                    if (store.checkPassword(pinBuffer.toString())) {
+                        onSuccess.run();
+                    } else {
+                        tvError.setVisibility(View.VISIBLE);
+                        pinBuffer.setLength(0);
+                        updateDots.run();
+                    }
+                }
+            }
+        };
+
+        // 绑定 0-9 虚拟按钮
+        int[] numIds = new int[]{
+                R.id.btn_num_0, R.id.btn_num_1, R.id.btn_num_2, R.id.btn_num_3,
+                R.id.btn_num_4, R.id.btn_num_5, R.id.btn_num_6, R.id.btn_num_7,
+                R.id.btn_num_8, R.id.btn_num_9
+        };
+        View.OnClickListener digitClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Object tag = v.getTag();
+                if (tag instanceof Integer) {
+                    consumer.onDigit((Integer) tag);
+                }
+            }
+        };
+        for (int i = 0; i <= 9; i++) {
+            Button b = dialogView.findViewById(numIds[i]);
+            if (b != null) {
+                b.setTag(i);
+                b.setOnClickListener(digitClickListener);
+            }
+        }
+
+        // 清除键
+        View btnClear = dialogView.findViewById(R.id.btn_pin_clear);
+        if (btnClear != null) {
+            btnClear.setOnClickListener(v -> {
+                pinBuffer.setLength(0);
+                updateDots.run();
+                tvError.setVisibility(View.INVISIBLE);
+            });
+        }
+
+        // 取消键
+        View btnCancel = dialogView.findViewById(R.id.btn_pin_cancel);
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> pinDialog.dismiss());
+        }
+
+        // 监听遥控器物理按键作为辅助
         pinDialog.setOnKeyListener((d, keyCode, event) -> {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 if (keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9) {
                     int digit = keyCode - KeyEvent.KEYCODE_0;
-                    if (pinBuffer.length() < 4) {
-                        pinBuffer.append(digit);
-                        updateDots.run();
-                        tvError.setVisibility(View.INVISIBLE);
-                    }
-                    if (pinBuffer.length() == 4) {
-                        if (store.checkPassword(pinBuffer.toString())) {
-                            pinDialog.dismiss();
-                            if (modeSelectDialog != null) modeSelectDialog.dismiss();
-                            // 细节 2：进入大人模式，本次开机空闲不自动复位，畅看无阻
-                            store.setCurrentSessionMode(ChildLockStore.MODE_ADULT);
-                            isChildSessionActive = false;
-                            Toast.makeText(deskActivity, "已验证通过，进入大人模式（畅看无限制）", Toast.LENGTH_SHORT).show();
-                        } else {
-                            tvError.setVisibility(View.VISIBLE);
-                            pinBuffer.setLength(0);
-                            updateDots.run();
-                        }
-                    }
+                    consumer.onDigit(digit);
                     return true;
                 } else if (keyCode == KeyEvent.KEYCODE_DEL) {
                     if (pinBuffer.length() > 0) {
@@ -273,16 +340,6 @@ public class ChildLockManager {
             }
             return false;
         });
-
-        dialogView.findViewById(R.id.btn_pin_clear).setOnClickListener(v -> {
-            pinBuffer.setLength(0);
-            updateDots.run();
-            tvError.setVisibility(View.INVISIBLE);
-        });
-
-        dialogView.findViewById(R.id.btn_pin_cancel).setOnClickListener(v -> pinDialog.dismiss());
-
-        pinDialog.show();
     }
 
     /**
@@ -316,55 +373,14 @@ public class ChildLockManager {
                 .setCancelable(true)
                 .create();
 
-        Runnable updateDots = () -> {
-            for (int i = 0; i < 4; i++) {
-                if (dots[i] != null) {
-                    dots[i].setAlpha(i < pinBuffer.length() ? 1.0f : 0.2f);
-                }
-            }
-        };
-        updateDots.run();
-
-        pinDialog.setOnKeyListener((d, keyCode, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                if (keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9) {
-                    int digit = keyCode - KeyEvent.KEYCODE_0;
-                    if (pinBuffer.length() < 4) {
-                        pinBuffer.append(digit);
-                        updateDots.run();
-                        tvError.setVisibility(View.INVISIBLE);
-                    }
-                    if (pinBuffer.length() == 4) {
-                        if (store.checkPassword(pinBuffer.toString())) {
-                            pinDialog.dismiss();
-                            activity.startActivity(new Intent(activity, ChildLockSettingsActivity.class));
-                        } else {
-                            tvError.setVisibility(View.VISIBLE);
-                            pinBuffer.setLength(0);
-                            updateDots.run();
-                        }
-                    }
-                    return true;
-                } else if (keyCode == KeyEvent.KEYCODE_DEL) {
-                    if (pinBuffer.length() > 0) {
-                        pinBuffer.deleteCharAt(pinBuffer.length() - 1);
-                        updateDots.run();
-                    }
-                    return true;
-                }
-            }
-            return false;
+        setupPinVirtualKeyboard(dialogView, pinDialog, pinBuffer, dots, tvError, () -> {
+            pinDialog.dismiss();
+            activity.startActivity(new Intent(activity, ChildLockSettingsActivity.class));
         });
-
-        dialogView.findViewById(R.id.btn_pin_clear).setOnClickListener(v -> {
-            pinBuffer.setLength(0);
-            updateDots.run();
-            tvError.setVisibility(View.INVISIBLE);
-        });
-
-        dialogView.findViewById(R.id.btn_pin_cancel).setOnClickListener(v -> pinDialog.dismiss());
 
         pinDialog.show();
+        View key5 = dialogView.findViewById(R.id.btn_num_5);
+        if (key5 != null) key5.requestFocus();
     }
 
     /**
